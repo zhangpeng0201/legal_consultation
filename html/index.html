@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>法询 · 法律咨询</title>
+  <style>
+    :root {
+      --bg: #e8e2d6;
+      --panel: #f7f3ec;
+      --ink: #1c1916;
+      --muted: #6d655c;
+      --line: #ddd4c6;
+      --user: #243044;
+      --seal: #9a3b32;
+      --chip: #fffdf9;
+      --shadow: 0 18px 50px rgba(48, 36, 22, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 480px at 10% -10%, rgba(154, 59, 50, 0.08), transparent 60%),
+        radial-gradient(900px 420px at 110% 0%, rgba(36, 48, 68, 0.08), transparent 55%),
+        var(--bg);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .app {
+      width: 60%;
+      height: 100%;
+      min-height: 0;
+      container-type: inline-size;
+      --fs-title: clamp(1.125rem, 3.6cqi, 1.75rem);
+      --fs-body: clamp(1rem, 3.3cqi, 1.625rem);
+      --fs-ui: clamp(0.875rem, 2.35cqi, 1.125rem);
+      --fs-meta: clamp(0.8125rem, 1.9cqi, 1rem);
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 0;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fffdf9 0%, #f7f3ec 100%);
+    }
+
+    .seal {
+      width: clamp(2.5rem, 7cqi, 3.25rem);
+      height: clamp(2.5rem, 7cqi, 3.25rem);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #fff8f2;
+      background: var(--seal);
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+      font-size: 1.25rem;
+      font-size: clamp(1.125rem, 3.2cqi, 1.5rem);
+      letter-spacing: 0;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    }
+
+    .title-block { flex: 1; min-width: 0; }
+
+    h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-size: var(--fs-title);
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+    }
+
+    .subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.8125rem;
+      font-size: var(--fs-meta);
+    }
+
+    .ghost {
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font: inherit;
+      font-size: 0.875rem;
+      font-size: var(--fs-ui);
+      cursor: pointer;
+    }
+
+    .ghost:hover { color: var(--ink); background: #fff; }
+
+    .thread {
+      flex: 1;
+      overflow-y: auto;
+      padding: 22px 22px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      max-width: 92%;
+      animation: rise 0.22s ease;
+    }
+
+    .row.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: clamp(1.75rem, 5cqi, 2.5rem);
+      height: clamp(1.75rem, 5cqi, 2.5rem);
+      flex: 0 0 clamp(1.75rem, 5cqi, 2.5rem);
+      margin-top: 2px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.8125rem;
+      font-size: var(--fs-meta);
+      font-family: "Songti SC", "STSong", serif;
+    }
+
+    .row.assistant .avatar {
+      background: #efe4d6;
+      color: var(--seal);
+      border: 1px solid #e4d3c0;
+    }
+
+    .row.user .avatar {
+      background: var(--user);
+      color: #f4efe6;
+    }
+
+    .bubble {
+      padding: 12px 14px;
+      border-radius: 16px;
+      line-height: 1.75;
+      font-size: 1rem;
+      font-size: var(--fs-body);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .row.assistant .bubble {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-top-left-radius: 6px;
+    }
+
+    .row.user .bubble {
+      background: var(--user);
+      color: #f7f3ec;
+      border-top-right-radius: 6px;
+    }
+
+    .bubble strong { font-weight: 650; }
+
+    .row.assistant .bubble strong { color: #7d2f28; }
+
+    .row.assistant .bubble.refusal {
+      background: #fdf6ef;
+      border-color: #e4d3c0;
+      color: var(--muted);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 22px 12px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--chip);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font: inherit;
+      font-size: 0.875rem;
+      font-size: var(--fs-ui);
+      cursor: pointer;
+    }
+
+    .chip:hover { border-color: #c9b8a4; background: #fff; }
+
+    .composer {
+      padding: 12px 16px 16px;
+      border-top: 1px solid var(--line);
+      background: #fffdf9;
+    }
+
+    .box {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 16px;
+      padding: 8px 8px 8px 14px;
+    }
+
+    .box:focus-within {
+      border-color: #b9a48c;
+      box-shadow: 0 0 0 3px rgba(154, 59, 50, 0.08);
+    }
+
+    textarea {
+      flex: 1;
+      resize: none;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      font: inherit;
+      font-size: 1rem;
+      font-size: var(--fs-body);
+      line-height: 1.5;
+      max-height: 140px;
+      padding: 8px 0;
+      color: var(--ink);
+    }
+
+    button.send {
+      width: clamp(2.25rem, 6cqi, 2.75rem);
+      height: clamp(2.25rem, 6cqi, 2.75rem);
+      border: 0;
+      border-radius: 12px;
+      background: var(--seal);
+      color: #fff8f2;
+      cursor: pointer;
+      font-size: 1.125rem;
+      font-size: var(--fs-ui);
+    }
+
+    button.send:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .hint {
+      margin: 8px 6px 0;
+      color: var(--muted);
+      font-size: 0.8125rem;
+      font-size: var(--fs-meta);
+    }
+
+    .typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 2px;
+    }
+
+    .typing-label {
+      margin-right: 2px;
+      color: var(--muted);
+      font-size: 0.8125rem;
+      font-size: var(--fs-meta);
+    }
+
+    .pending {
+      color: var(--muted);
+      font-size: 0.9375rem;
+      font-size: var(--fs-ui);
+    }
+
+    .typing i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #b7aa9a;
+      animation: blink 1s infinite;
+    }
+
+    .typing i:nth-child(2) { animation-delay: 0.15s; }
+    .typing i:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.25; }
+      40% { opacity: 1; }
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="seal" aria-hidden="true">法</div>
+      <div class="title-block">
+        <h1>法询</h1>
+        <div class="subtitle">法律条文智能问答系统，答案可溯源至具体条文</div>
+      </div>
+      <button class="ghost" id="clear" type="button">清空对话</button>
+    </header>
+
+    <section class="thread" id="thread" aria-live="polite"></section>
+
+    <div class="chips" id="chips">
+      <button class="chip" type="button" data-q="高空抛物砸伤人谁负责">高空抛物砸伤人谁负责</button>
+      <button class="chip" type="button" data-q="试用期最长可以多久">试用期最长可以多久</button>
+      <button class="chip" type="button" data-q="合同到期不续签有补偿吗">合同到期不续签有补偿吗</button>
+    </div>
+
+    <form class="composer" id="form">
+      <div class="box">
+        <label class="visually-hidden" for="input" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">输入法律问题</label>
+        <textarea id="input" rows="1" placeholder="描述你的法律问题，Enter 发送" maxlength="2000"></textarea>
+        <button class="send" id="send" type="submit" aria-label="发送" disabled>↑</button>
+      </div>
+      <div class="hint">Enter 发送，Shift + Enter 换行。</div>
+    </form>
+  </main>
+
+  <script>
+    const thread = document.getElementById("thread");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const send = document.getElementById("send");
+    const chips = document.getElementById("chips");
+
+    const welcome = "你好，我是法询。把纠纷事实说清楚，我会按「问题结论、法律依据、简要分析」来组织回答。你也可以先点下面的示例问题。";
+
+    function escapeHtml(text) {
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function renderMarkdown(text) {
+      const escaped = escapeHtml(text);
+      return escaped
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n/g, "<br>");
+    }
+
+    function addMessage(role, html, { raw = false } = {}) {
+      const row = document.createElement("div");
+      row.className = "row " + role;
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = role === "user" ? "我" : "询";
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.innerHTML = raw ? html : renderMarkdown(html);
+      row.append(avatar, bubble);
+      thread.append(row);
+      thread.scrollTop = thread.scrollHeight;
+      return bubble;
+    }
+
+    function setTyping(on, label) {
+      const existing = document.getElementById("typing-row");
+      if (!on) {
+        existing?.remove();
+        return;
+      }
+      if (existing) {
+        if (label) existing.querySelector(".typing-label").textContent = label;
+        return;
+      }
+      const row = document.createElement("div");
+      row.className = "row assistant";
+      row.id = "typing-row";
+      row.innerHTML = '<div class="avatar">询</div><div class="bubble"><span class="typing"><span class="typing-label"></span><i></i><i></i><i></i></span></div>';
+      row.querySelector(".typing-label").textContent = label || "正在处理";
+      thread.append(row);
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    // 咨询接口：POST /ask/stream，服务端以 SSE 逐事件推送
+    // 事件形状：{"type":"meta", query, answerable, evidence, reason}
+    //          {"type":"status", stage, text}
+    //          {"type":"delta", text}
+    //          {"type":"error", message}
+    //          {"type":"done"}
+    const STREAM_URL = "/ask/stream";
+
+    async function streamAnswer(query, { onMeta, onStatus, onDelta, onError }) {
+      const response = await fetch(STREAM_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, session_id: sessionId }),
+      });
+      if (!response.ok) {
+        throw new Error("接口请求失败（" + response.status + "）");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let cut;
+        while ((cut = buffer.indexOf("\n\n")) !== -1) {
+          const frame = buffer.slice(0, cut).trim();
+          buffer = buffer.slice(cut + 2);
+          if (!frame.startsWith("data:")) continue;
+          const payload = frame.slice(5).trim();
+          if (!payload) continue;
+          let event;
+          try {
+            event = JSON.parse(payload);
+          } catch {
+            continue;
+          }
+          if (event.type === "session") {
+            sessionId = event.session_id;
+            localStorage.setItem("law_session_id", sessionId);
+          }
+          else if (event.type === "meta") onMeta(event);
+          else if (event.type === "status" && onStatus) onStatus(event);
+          else if (event.type === "delta") onDelta(event.text || "");
+          else if (event.type === "error" && onError) onError(event.message);
+        }
+      }
+    }
+
+    let pending = false;
+    let sessionId = localStorage.getItem('law_session_id')
+    function syncSendButton() {
+      send.disabled = pending || input.value.trim().length === 0;
+    }
+
+    async function ask(query) {
+      if (pending) return;
+      pending = true;
+      addMessage("user", query);
+      input.value = "";
+      input.style.height = "auto";
+      syncSendButton();
+      chips.hidden = true;
+      setTyping(true, "正在检索法条");
+
+      let bubble = null;
+      let text = "";
+      let streaming = false;
+      try {
+        await streamAnswer(query, {
+          onMeta(event) {
+            setTyping(false);
+            bubble = addMessage("assistant", "");
+            if (!event.answerable) {
+              bubble.classList.add("refusal");
+              bubble.innerHTML = renderMarkdown(
+                "现行条文中没有能回答这个问题的依据。\n\n原因：" + (event.reason || "")
+              );
+            } else {
+              bubble.innerHTML = '<span class="pending">正在起草答案…</span>';
+            }
+          },
+          onStatus(event) {
+            if (bubble && !streaming) {
+              bubble.innerHTML = '<span class="pending">' +
+                escapeHtml(event.text || "正在处理") + "…</span>";
+            }
+          },
+          onDelta(chunk) {
+            if (!chunk) return;
+            if (!bubble) bubble = addMessage("assistant", "");
+            streaming = true;
+            text += chunk;
+            bubble.innerHTML = renderMarkdown(text);
+            thread.scrollTop = thread.scrollHeight;
+          },
+          onError(message) {
+            if (bubble) {
+              bubble.innerHTML += "<br><br>生成中断：" + escapeHtml(message || "未知错误");
+            }
+          },
+        });
+        if (!bubble) {
+          addMessage("assistant", "接口没有返回内容。");
+        }
+      } catch (error) {
+        setTyping(false);
+        if (bubble) {
+          bubble.innerHTML += "<br><br>出错了：" + escapeHtml(error.message || "请求失败");
+        } else {
+          addMessage("assistant", "暂时无法回答：" + (error.message || "请求失败"));
+        }
+      } finally {
+        pending = false;
+        syncSendButton();
+        input.focus();
+      }
+    }
+
+    function reset() {
+      thread.innerHTML = "";
+      chips.hidden = false;
+      addMessage("assistant", welcome);
+      input.focus();
+    }
+
+    input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 140) + "px";
+      syncSendButton();
+    });
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const query = input.value.trim();
+      if (!query) return;
+      ask(query);
+    });
+
+    chips.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-q]");
+      if (!button) return;
+      ask(button.dataset.q);
+    });
+
+    document.getElementById("clear").addEventListener("click", (event) => {
+      sessionId = null;
+      localStorage.removeItem("law_session_id");
+      reset();
+    });
+  reset();
+  </script>
+</body>
+</html>

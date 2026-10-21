@@ -1,0 +1,16 @@
+# 统一换行符：仓库内一律 LF
+# 不加这条，Windows 上的 CRLF 会被原样提交，跨平台 diff 全是空白差异
+* text=auto eol=lf
+
+# 二进制文件不做文本转换（模型权重、索引、文档）
+*.pkl  binary
+*.npy  binary
+*.bin  binary
+*.safetensors binary
+*.docx binary
+*.pdf  binary
+
+# Windows 脚本保留 CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf

@@ -1,0 +1,21 @@
+# 法询 —— 运行时依赖
+# 注意：torch 不在此文件内，由 Dockerfile 单独装 CPU 版（见 Dockerfile 注释）
+
+# ---- Web 服务 ----
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+pydantic>=2.7,<3.0
+python-dotenv>=1.0
+
+# ---- LangChain ----
+# 项目只用到这三个包，不需要安装 langchain 主包
+langchain-core>=0.3,<1.0
+langchain-openai>=0.3,<1.0
+langchain-huggingface>=0.1,<1.0
+
+# ---- 向量检索 ----
+sentence-transformers>=3.0,<6.0
+numpy>=1.26,<3.0
+
+# ---- 中文分词（BM25 建索引与查询都用）----
+jieba>=0.42
