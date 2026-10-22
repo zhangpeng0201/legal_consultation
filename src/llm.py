@@ -8,49 +8,51 @@ from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 
 load_dotenv()
 
-
 DATA = load_data(FILE_NAME)
 
 llm = ChatOpenAI(
     api_key=os.environ['DEEPSEEK_API_KEY'],
     model_name=os.environ['DEEPSEEK_NAME'],
-    base_url= os.environ['DEEPSEEK_URL'],
+    base_url=os.environ['DEEPSEEK_URL'],
     temperature=0,
     max_tokens=800,
     extra_body={"thinking": {"type": "disabled"}},
 )
 
-
 JUDGE_PROMPT = ChatPromptTemplate.from_template(
-        '''
-        你是一个法律问题判断专家。你的任务是判断：给定的参考法律条文是否足以回答该法律问题，并以 JSON 格式输出判断结果。
+    '''
+    你是一个法律问题判断专家。你的任务是判断：给定的参考法律条文是否足以回答该法律问题，并以 JSON 格式输出判断结果。
+    
+    【最高优先级规则，优先于下面所有判断标准】
+    规则一 以【参考法律条文】为准。禁止用你记忆中的法律知识判断条文内容是否正确——法律可能已修订，即使该条内容与你记忆中的版本不一致，也一律视为有效条文。
+    规则二 只要【参考法律条文】中出现了用户所问条号对应的原文，answerable 必须为 true。
 
-        【判断标准】（按顺序逐条检查）
-        1. 条文中必须存在能直接支撑回答的核心条文——你能明确指出"第几条"回答了问题的争议点
-        2. 若问题本身只是对某条文的调用（例如"公司法第23条""民法典第五百八十五条"），属于"查询该条内容"，只要参考条文中包含该条原文，即 answerable 为 true
-        3. 仅出现相关主题的字眼（如都提到"合同""借款"）但条文内容与问题的争议点不对应 → answerable 为 false
-        4. 条文只能部分覆盖问题（如只涉及责任认定、不涉及用户问的赔偿标准）→ answerable 为 false
-        5. 条文之间互相矛盾、或需要条文以外的专业知识才能得出结论 → answerable 为 false
-        6. 拿不准时 answerable 一律为 false
+    【判断标准】（按顺序逐条检查）
+    1. 条文中必须存在能直接支撑回答的核心条文——你能明确指出"第几条"回答了问题的争议点
+    2. 若问题本身只是对某条文的调用（例如"公司法第23条""民法典第五百八十五条"），属于"查询该条内容"，只要参考条文中包含该条原文，即 answerable 为 true
+    3. 仅出现相关主题的字眼（如都提到"合同""借款"）但条文内容与问题的争议点不对应 → answerable 为 false
+    4. 条文只能部分覆盖问题（如只涉及责任认定、不涉及用户问的赔偿标准）→ answerable 为 false
+    5. 条文之间互相矛盾、或需要条文以外的专业知识才能得出结论 → answerable 为 false
+    6. 拿不准时 answerable 一律为 false
 
-        【输出格式】
-        只输出一个 JSON 对象，不输出任何解释、前缀、代码块标记（```）或 JSON 以外的任何内容。字段定义：
-        - answerable：布尔值，true 表示条文足以回答，false 表示不足以回答
-        - evidence：字符串数组，列出支撑判断的法律全称 + 条文序号（如"中华人民共和国民法典 第一千二百五十四条"）；answerable 为 false 时输出空数组 []
-        - reason：一句话说明判断依据；answerable 为 false 时须简述具体缺什么（如"条文仅涉及 X，未涉及用户所问的 Y"）
+    【输出格式】
+    只输出一个 JSON 对象，不输出任何解释、前缀、代码块标记（```）或 JSON 以外的任何内容。字段定义：
+    - answerable：布尔值，true 表示条文足以回答，false 表示不足以回答
+    - evidence：字符串数组，列出支撑判断的法律全称 + 条文序号（如"中华人民共和国民法典 第一千二百五十四条"）；answerable 为 false 时输出空数组 []
+    - reason：一句话说明判断依据；answerable 为 false 时须简述具体缺什么（如"条文仅涉及 X，未涉及用户所问的 Y"）
 
-        输出示例：
-        {{"answerable": true, "evidence": ["中华人民共和国民法典 第一千二百五十四条"], "reason": "该条直接规定高空抛物由侵权人担责，难以确定时由可能加害的建筑物使用人补偿，与问题争议点直接对应"}}
+    输出示例：
+    {{"answerable": true, "evidence": ["中华人民共和国民法典 第一千二百五十四条"], "reason": "该条直接规定高空抛物由侵权人担责，难以确定时由可能加害的建筑物使用人补偿，与问题争议点直接对应"}}
 
-        【待判断问题】
-        {query}
+    【待判断问题】
+    {query}
 
-        【参考法律条文】
-        {context}
+    【参考法律条文】
+    {context}
 
-        输出：
-        '''
-    )
+    输出：
+    '''
+)
 JUDGE_CHAIN = JUDGE_PROMPT | llm | JsonOutputParser()
 
 ANSWER_PROMPT = ChatPromptTemplate.from_template(
@@ -81,7 +83,6 @@ ANSWER_PROMPT = ChatPromptTemplate.from_template(
 ANSWER_CHAIN = ANSWER_PROMPT | llm | StrOutputParser()
 
 
-
 # 获取查询结果
 def get_search_result(query):
     row_result = []
@@ -92,19 +93,23 @@ def get_search_result(query):
     context = "\n".join(f"[{j}] {t}" for j, t in enumerate(row_result, 1))
     return context
 
+
 # 判断问题是否可以回答
 def query_judge(query, context):
-    return JUDGE_CHAIN.invoke({ "query": query, "context": context})
+    return JUDGE_CHAIN.invoke({"query": query, "context": context})
+
 
 # 答案生成
 def generate_answer(query, context):
-    return ANSWER_CHAIN.invoke({ "query": query, "context": context})
+    return ANSWER_CHAIN.invoke({"query": query, "context": context})
+
 
 async def generate_answer_stream(query, context):
-    async for chunk in ANSWER_CHAIN.astream({ "query": query, "context": context}):
+    async for chunk in ANSWER_CHAIN.astream({"query": query, "context": context}):
         if not chunk:
             continue
         yield chunk
+
 
 # 对话
 def ask(query, context, judge):
@@ -121,6 +126,7 @@ def ask(query, context, judge):
         "reason": judge['reason'],
         "answer": generate_answer(query, context),
     }
+
 
 # 对话（流式）
 async def ask_stream(query, context, judge):
@@ -148,19 +154,3 @@ async def ask_stream(query, context, judge):
     except Exception as e:
         yield {"type": "error", "message": str(e)}
     yield {"type": "done"}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
