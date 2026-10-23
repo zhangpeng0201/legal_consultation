@@ -38,7 +38,7 @@ from llm import get_search_result, query_judge, generate_answer
 DEFAULT_SET = BASE_DIR / 'data' / 'eval' / 'golden_set.json'
 TOP_K = 5                      # 与 llm.get_search_result 内部一致
 
-EV_RE = re.compile(r'第([零一二三四五六七八九十百千]+)条')
+EV_RE = re.compile(r'第([0-9]+|[零一二三四五六七八九十百千]+)条')
 SUP_RE = re.compile(r'^之([零一二三四五六七八九十百千]+)')
 SEC_RE = re.compile(r'\*\*(问题结论|法律依据|简要分析)\*\*[：:]')
 BODY_LIMIT = 200               # prompt 写的是「总字数（不含条文原文）不超过 200 字」
